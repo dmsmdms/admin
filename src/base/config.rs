@@ -28,7 +28,6 @@ fn default_mon_interval() -> u64 {
 
 #[derive(Deserialize)]
 pub struct ConfigAdmin {
-    pub log_sock_path: PathBuf,
     pub backup_chat_id: i64,
     pub backup_time: String, // "HH:MM" local time
 }
@@ -45,12 +44,12 @@ pub struct ConfigTokens {
 pub struct ConfigBot {
     pub en: bool,
     pub webhook_url: Option<Url>,
-    pub webhook_port: Option<u16>,
     pub token: String,
 }
 
 #[derive(Deserialize)]
 pub struct Config {
+    pub sock_path: PathBuf,
     pub kv_path: PathBuf,
     #[serde(default)]
     pub services: Vec<ConfigService>,

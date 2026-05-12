@@ -29,7 +29,7 @@ pub async fn router(cancel_token: CancellationToken) -> Router {
     let shutdown_token = dispatcher.shutdown_token();
 
     let config = Config::get();
-    let addr = SocketAddr::from((Ipv4Addr::UNSPECIFIED, 0));
+    let addr = SocketAddr::from((Ipv4Addr::LOCALHOST, 0));
     let url = config.bot.webhook_url.as_ref().unwrap();
     let opt = Options::new(addr, url.clone());
     let (listener, _, router) = axum_to_router(bot.clone(), opt)
@@ -37,22 +37,19 @@ pub async fn router(cancel_token: CancellationToken) -> Router {
         .unwrap_or_else(|err| panic!("Failed to set up bot webhook: {err}"));
 
     tokio::spawn(async move {
-        info!("Starting bot webhook server at {url}");
+        info!("Starting bot webhook dispatcher for {url}");
+        let error_handler = LoggingErrorHandler::with_custom_text("Axum bot error:");
         tokio::join!(
-            async {
-                let error_handler = LoggingErrorHandler::with_custom_text("Axum bot error:");
-                dispatcher
-                    .dispatch_with_listener(listener, error_handler)
-                    .await;
-            },
+            dispatcher.dispatch_with_listener(listener, error_handler),
             async {
                 cancel_token.cancelled().await;
                 bot.delete_webhook().send().await.ok();
                 shutdown_token.shutdown().ok();
             }
         );
-        info!("Bot webhook server shutting down");
+        info!("Bot webhook dispatcher shutting down");
     });
 
     router
 }
+

@@ -3,7 +3,7 @@ use admin::{
     base::{config::Config, log, signal},
     bot,
     kv::kv::KvStore,
-    logs, services,
+    services,
 };
 use tokio_util::sync::CancellationToken;
 
@@ -15,8 +15,6 @@ async fn main() {
 
     // Initialize KV store
     KvStore::global();
-
-    let log_sock = config.admin.as_ref().map(|a| a.log_sock_path.clone());
 
     tokio::join!(
         signal::run(token.clone()),
@@ -30,11 +28,6 @@ async fn main() {
             // Polling mode: run when webhook_url is not set
             if config.bot.en && config.bot.webhook_url.is_none() {
                 bot::router::run(token.clone()).await;
-            }
-        },
-        async {
-            if let Some(sock) = &log_sock {
-                logs::server::run(sock, token.clone()).await;
             }
         },
         services::scheduler::run(token.clone()),

@@ -3,54 +3,11 @@ use crate::{
     kv::{bot::Permission, kv::KvStore},
     logs::formatter::{self, Log},
 };
-use std::fs;
-use tokio::io::AsyncReadExt;
-use tokio::net::UnixListener;
-use tokio_util::sync::CancellationToken;
-use tracing::{error, info, warn};
+use axum::{body::Bytes, http::StatusCode};
+use tracing::{error, warn};
 
-pub async fn run(sock_path: &std::path::Path, cancel_token: CancellationToken) {
-    fs::remove_file(sock_path).ok();
-
-    let listener = match UnixListener::bind(sock_path) {
-        Ok(l) => l,
-        Err(e) => {
-            error!("Failed to bind log socket {:?}: {}", sock_path, e);
-            return;
-        }
-    };
-    info!("Log server listening on {:?}", sock_path);
-
-    loop {
-        tokio::select! {
-            result = listener.accept() => {
-                match result {
-                    Ok((stream, _)) => {
-                            tokio::spawn(handle_connection(stream));
-                        }
-                    Err(e) => {
-                        warn!("Log socket accept error: {}", e);
-                    }
-                }
-            }
-            _ = cancel_token.cancelled() => {
-                info!("Log server stopped");
-                fs::remove_file(sock_path).ok();
-                break;
-            }
-        }
-    }
-}
-
-async fn handle_connection(mut stream: tokio::net::UnixStream) {
-    let mut buf = Vec::new();
-    if let Err(e) = stream.read_to_end(&mut buf).await {
-        warn!("Log read error: {}", e);
-        return;
-    }
-
-    // Each connection may send one or multiple newline-delimited JSON log entries
-    for line in buf.split(|&b| b == b'\n') {
+pub async fn handle_log(body: Bytes) -> StatusCode {
+    for line in body.split(|&b| b == b'\n') {
         if line.is_empty() {
             continue;
         }
@@ -68,10 +25,10 @@ async fn handle_connection(mut stream: tokio::net::UnixStream) {
             }
         }
     }
+    StatusCode::OK
 }
 
 async fn broadcast_to_perm(perm: Permission, msg: String) {
-    // Collect recipients before any await to avoid holding non-Send KV iter
     let chat_ids = {
         let kv = KvStore::global();
         let rtxn = match kv.env.read_txn() {
@@ -100,3 +57,4 @@ async fn broadcast_to_perm(perm: Permission, msg: String) {
         }
     }
 }
+
