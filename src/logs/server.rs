@@ -26,9 +26,8 @@ pub async fn run(sock_path: &std::path::Path, cancel_token: CancellationToken) {
             result = listener.accept() => {
                 match result {
                     Ok((stream, _)) => {
-                        // current_thread runtime — spawn_local is fine
-                        tokio::task::spawn_local(handle_connection(stream));
-                    }
+                            tokio::spawn(handle_connection(stream));
+                        }
                     Err(e) => {
                         warn!("Log socket accept error: {}", e);
                     }
@@ -61,7 +60,11 @@ async fn handle_connection(mut stream: tokio::net::UnixStream) {
                 broadcast_to_perm(Permission::Log, text).await;
             }
             Err(e) => {
-                warn!("Failed to parse log entry: {} — {:?}", e, String::from_utf8_lossy(line));
+                warn!(
+                    "Failed to parse log entry: {} — {:?}",
+                    e,
+                    String::from_utf8_lossy(line)
+                );
             }
         }
     }

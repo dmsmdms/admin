@@ -27,7 +27,8 @@ async fn main() {
             }
         },
         async {
-            if config.bot.en && config.bot.webhook_url.is_some() {
+            // Polling mode: run when webhook_url is not set
+            if config.bot.en && config.bot.webhook_url.is_none() {
                 bot::router::run(token.clone()).await;
             }
         },

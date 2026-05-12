@@ -13,8 +13,8 @@ pub async fn run(cancel_token: CancellationToken) {
 
     let bot_router = bot::router::router(cancel_token.clone()).await;
 
-    // Default webhook port
-    let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
+    let port = config.bot.webhook_port.unwrap_or(8080);
+    let addr = SocketAddr::from(([127, 0, 0, 1], port));
 
     let listener = tokio::net::TcpListener::bind(&addr)
         .await

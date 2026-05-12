@@ -2,10 +2,7 @@ use crate::{
     backup::{sender, splitter},
     base::config::Config,
     bot::bot::send_message,
-    kv::{
-        kv::KvStore,
-        meta::{MetaKey, MetaValue},
-    },
+    kv::kv::KvStore,
 };
 use chrono::{Local, NaiveTime, Timelike};
 use std::path::Path;
@@ -71,11 +68,8 @@ async fn run_backups() {
     for service in config.services.iter().filter(|s| s.enabled) {
         info!("Running backup for service '{}'", service.name);
 
-        // Get last backup timestamp from KV
-        let last_ts = match KvStore::get_meta(MetaKey::LastBackupTs) {
-            Ok(Some(MetaValue::LastBackupTs(ts))) => ts,
-            _ => 0,
-        };
+        // Get last backup timestamp from KV (per-service)
+        let last_ts = KvStore::get_last_backup_ts(&service.name).unwrap_or(0);
 
         // Request backup from service
         let backup_result = sender::request_backup(&service.sock_path, last_ts).await;
@@ -85,7 +79,10 @@ async fn run_backups() {
                 error!("Backup request failed for '{}': {}", service.name, e);
                 let _ = send_message(
                     backup_chat_id,
-                    format!("❌ Backup failed for <b>{}</b>\n<code>{}</code>", service.name, e),
+                    format!(
+                        "❌ Backup failed for <b>{}</b>\n<code>{}</code>",
+                        service.name, e
+                    ),
                 )
                 .await;
                 continue;
@@ -103,7 +100,10 @@ async fn run_backups() {
         // Send each file (split into 50MB chunks) to backup chat
         for path_str in &resp.paths {
             let path = Path::new(path_str);
-            let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("backup");
+            let filename = path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("backup");
 
             match splitter::split_file(path).await {
                 Ok(chunks) => {
@@ -137,15 +137,18 @@ async fn run_backups() {
                     warn!("Failed to read backup file {:?}: {}", path, e);
                     let _ = send_message(
                         backup_chat_id,
-                        format!("⚠️ Could not read backup file <code>{}</code>: {}", path_str, e),
+                        format!(
+                            "⚠️ Could not read backup file <code>{}</code>: {}",
+                            path_str, e
+                        ),
                     )
                     .await;
                 }
             }
         }
 
-        // Update last backup timestamp in KV
-        if let Err(e) = KvStore::set_meta(MetaValue::LastBackupTs(now_ts)) {
+        // Update last backup timestamp in KV (per-service)
+        if let Err(e) = KvStore::set_last_backup_ts(&service.name, now_ts) {
             error!("Failed to save backup timestamp: {}", e);
         }
     }

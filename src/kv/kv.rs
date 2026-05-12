@@ -5,7 +5,7 @@ use crate::{
 use heed::{
     Database, Env, EnvFlags, EnvOpenOptions, RwTxn, WithoutTls,
     byteorder::BE,
-    types::{I64, SerdeBincode, U8},
+    types::{I64, SerdeBincode, Str, U8},
 };
 use std::{error::Error, fs, sync::OnceLock};
 
@@ -13,6 +13,7 @@ pub struct KvStore {
     pub env: Env<WithoutTls>,
     pub meta: Database<U8, SerdeBincode<MetaValue>>,
     pub chat_auth: Database<I64<BE>, SerdeBincode<ChatAuth>>,
+    pub backup_ts: Database<Str, SerdeBincode<i64>>,
 }
 
 static KV_STORE: OnceLock<KvStore> = OnceLock::new();
@@ -20,7 +21,7 @@ static KV_STORE: OnceLock<KvStore> = OnceLock::new();
 impl KvStore {
     pub fn global() -> &'static Self {
         KV_STORE.get_or_init(|| {
-            Self::open(2, 32).unwrap_or_else(|err| panic!("Failed to open KV store: {err}"))
+            Self::open(3, 32).unwrap_or_else(|err| panic!("Failed to open KV store: {err}"))
         })
     }
 
@@ -46,12 +47,14 @@ impl KvStore {
         let mut wtxn = env.write_txn()?;
         let meta = Self::create_db(&env, &mut wtxn, "meta")?;
         let chat_auth = Self::create_db(&env, &mut wtxn, "chat_auth")?;
+        let backup_ts = Self::create_db(&env, &mut wtxn, "backup_ts")?;
         wtxn.commit()?;
 
         Ok(Self {
             env,
             meta,
             chat_auth,
+            backup_ts,
         })
     }
 

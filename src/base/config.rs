@@ -45,6 +45,7 @@ pub struct ConfigTokens {
 pub struct ConfigBot {
     pub en: bool,
     pub webhook_url: Option<Url>,
+    pub webhook_port: Option<u16>,
     pub token: String,
 }
 

@@ -21,6 +21,7 @@ pub mod bot {
 }
 
 pub mod kv {
+    pub mod backup;
     pub mod bot;
     pub mod kv;
     pub mod meta;
