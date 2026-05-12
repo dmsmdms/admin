@@ -1,0 +1,91 @@
+[package]
+name = "admin"
+version = "0.1.0"
+edition = "2024"
+authors = ["Maksym Siverskyi <dmsmaxsv@gmail.com>"]
+description = "Admin bot for service monitoring and backups"
+
+[profile.release]
+opt-level = 3
+codegen-units = 1
+lto = "thin"
+panic = "abort"
+strip = true
+
+[dependencies]
+axum = { version = "0.8.9", features = [
+    "http1",
+    "json",
+], default-features = false }
+clap = { version = "4.6", features = [
+    "derive",
+    "cargo",
+    "help",
+    "color",
+    "error-context",
+    "std",
+], default-features = false }
+clap_complete = { version = "4.6", default-features = false }
+chrono = { version = "0.4.44", features = ["clock"], default-features = false }
+serde = { version = "1.0", features = ["derive"], default-features = false }
+serde_json = { version = "1.0.149", default-features = false, features = [
+    "alloc",
+] }
+strum = { version = "0.28.0", features = ["derive"], default-features = false }
+teloxide = { version = "0.17.0", features = [
+    "webhooks-axum",
+    "ctrlc_handler",
+    "native-tls",
+    "macros",
+], default-features = false }
+tokio = { version = "1.52.0", features = [
+    "rt",
+    "macros",
+    "time",
+], default-features = false }
+tokio-util = { version = "0.7.18", default-features = false }
+toml = { version = "1.1", features = [
+    "parse",
+    "serde",
+], default-features = false }
+tracing = { version = "0.1.44", default-features = false }
+tracing-subscriber = { version = "0.3.23", features = [
+    "fmt",
+    "ansi",
+    "env-filter",
+], default-features = false }
+url = { version = "2.5.8", features = ["serde"], default-features = false }
+heed = { version = "0.22.1", features = [
+    "serde-bincode",
+], default-features = false }
+reqwest = { version = "0.12", features = [
+    "native-tls",
+    "gzip",
+    "json",
+], default-features = false }
+hmac = { version = "0.12", default-features = false }
+sha2 = { version = "0.10", default-features = false }
+base64 = { version = "0.22", default-features = false, features = ["alloc"] }
+enumflags2 = { version = "0.7.12", features = [
+    "serde",
+], default-features = false }
+
+
+[build-dependencies]
+clap = { version = "4.6", features = [
+    "derive",
+    "cargo",
+    "help",
+    "color",
+    "error-context",
+], default-features = false }
+clap_complete = { version = "4.6", default-features = false }
+
+
+[patch.crates-io]
+teloxide = { path = "vendor/teloxide" }
+teloxide-core = { path = "vendor/teloxide-core" }
+itertools = { path = "vendor/itertools" }
+doxygen-rs = { path = "vendor/doxygen-rs" }
+object = { path = "vendor/object" }
+lmdb-master-sys = { path = "vendor/lmdb-master-sys" }
