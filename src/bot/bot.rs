@@ -1,18 +1,13 @@
 use crate::{
-    auth::{tokens::get_perms_for_token, validate_token, TokenType},
+    auth::{TokenType, tokens::get_perms_for_token, validate_token},
     base::config::Config,
     kv::{bot::Permission, kv::KvStore},
     services::flatdb,
 };
 use std::{error::Error, sync::OnceLock};
 use teloxide::{
-    adaptors::DefaultParseMode,
-    dispatching::UpdateHandler,
-    dptree,
-    errors::RequestError,
-    macros::BotCommands,
-    prelude::*,
-    types::ParseMode,
+    adaptors::DefaultParseMode, dispatching::UpdateHandler, dptree, errors::RequestError,
+    macros::BotCommands, prelude::*, types::ParseMode,
 };
 
 static BOT: OnceLock<DefaultParseMode<Bot>> = OnceLock::new();
@@ -101,14 +96,19 @@ async fn handle_command(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<
                                 .join("\n");
                             bot.send_message(
                                 msg.chat.id,
-                                format!("✅ Authentication successful!\n\n📋 Permissions:\n{perms_str}"),
+                                format!(
+                                    "✅ Authentication successful!\n\n📋 Permissions:\n{perms_str}"
+                                ),
                             )
                             .parse_mode(ParseMode::Html)
                             .await?;
                         }
                         Err(err_str) => {
-                            bot.send_message(msg.chat.id, format!("❌ Error saving auth: {err_str}"))
-                                .await?;
+                            bot.send_message(
+                                msg.chat.id,
+                                format!("❌ Error saving auth: {err_str}"),
+                            )
+                            .await?;
                         }
                     }
                 }
@@ -133,15 +133,13 @@ async fn handle_command(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<
                         .await?;
                 }
                 Ok(None) => {
-                    bot.send_message(
-                        msg.chat.id,
-                        "⚠️ Not authenticated. Use /auth &lt;token&gt;",
-                    )
-                    .parse_mode(ParseMode::Html)
-                    .await?;
+                    bot.send_message(msg.chat.id, "⚠️ Not authenticated. Use /auth &lt;token&gt;")
+                        .parse_mode(ParseMode::Html)
+                        .await?;
                 }
                 Err(err_str) => {
-                    bot.send_message(msg.chat.id, format!("❌ Error: {err_str}")).await?;
+                    bot.send_message(msg.chat.id, format!("❌ Error: {err_str}"))
+                        .await?;
                 }
             }
         }
@@ -155,7 +153,8 @@ async fn handle_command(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<
                     return Ok(());
                 }
                 Err(err_str) => {
-                    bot.send_message(msg.chat.id, format!("❌ Error: {err_str}")).await?;
+                    bot.send_message(msg.chat.id, format!("❌ Error: {err_str}"))
+                        .await?;
                     return Ok(());
                 }
                 Ok(true) => {}
@@ -192,7 +191,8 @@ async fn handle_command(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<
                     return Ok(());
                 }
                 Err(err_str) => {
-                    bot.send_message(msg.chat.id, format!("❌ Error: {err_str}")).await?;
+                    bot.send_message(msg.chat.id, format!("❌ Error: {err_str}"))
+                        .await?;
                     return Ok(());
                 }
                 Ok(true) => {}
