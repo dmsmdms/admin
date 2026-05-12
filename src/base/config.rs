@@ -28,7 +28,6 @@ fn default_mon_interval() -> u64 {
 
 #[derive(Deserialize)]
 pub struct ConfigAdmin {
-    pub backup_chat_id: i64,
     pub backup_time: String, // "HH:MM" local time
 }
 

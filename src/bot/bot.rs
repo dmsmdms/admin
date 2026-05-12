@@ -1,5 +1,5 @@
 use crate::{
-    auth::{tokens::get_perms_for_token, validate_token},
+    auth::{tokens::get_perms_for_token, validate_token, TokenType},
     base::config::Config,
     kv::{bot::Permission, kv::KvStore},
     services::flatdb,
@@ -85,6 +85,15 @@ async fn handle_command(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<
                     let save_result = kv_set_auth(chat_id, auth);
                     match save_result {
                         Ok(_) => {
+                            // Store backup chat ID if this is a backup token
+                            if token_type == TokenType::Backup {
+                                if let Err(e) = KvStore::set_meta(
+                                    crate::kv::meta::MetaValue::BackupChatId(chat_id),
+                                ) {
+                                    tracing::error!("Failed to set backup chat ID: {}", e);
+                                }
+                            }
+
                             let perms_str = perms
                                 .iter()
                                 .map(|p| format!(" • {p:?}"))

@@ -9,6 +9,7 @@ use strum::EnumDiscriminants;
 pub enum MetaValue {
     LastBackupTs(i64) = 1,
     LastStatusCheckTs(i64) = 2,
+    BackupChatId(i64) = 3,
 }
 
 impl KvStore {

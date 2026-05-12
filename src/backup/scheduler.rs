@@ -2,7 +2,7 @@ use crate::{
     backup::{sender, splitter},
     base::config::Config,
     bot::bot::send_message,
-    kv::kv::KvStore,
+    kv::{kv::KvStore, meta::MetaValue},
 };
 use chrono::{Local, NaiveTime, Timelike};
 use std::path::Path;
@@ -57,12 +57,19 @@ pub async fn run(cancel_token: CancellationToken) {
 async fn run_backups() {
     let config = Config::get();
 
-    let admin = match &config.admin {
-        Some(a) => a,
-        None => return,
+    // Get backup chat ID from KV meta
+    let backup_chat_id = match KvStore::get_meta(crate::kv::meta::MetaKey::BackupChatId) {
+        Ok(Some(MetaValue::BackupChatId(chat_id))) => chat_id,
+        Ok(_) => {
+            error!("No backup chat configured. Use /auth with backup token first.");
+            return;
+        }
+        Err(e) => {
+            error!("Failed to read backup chat ID from KV: {}", e);
+            return;
+        }
     };
 
-    let backup_chat_id = admin.backup_chat_id;
     let tg_token = &config.bot.token;
 
     for service in config.services.iter().filter(|s| s.enabled) {
